@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cửa hàng Headless - Bài làm cá nhân</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .header { background-color: #ff4757; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card h3 { margin-top: 0; font-size: 18px; color: #333; }
+        .price { color: #e15f41; font-weight: bold; font-size: 16px; margin-bottom: 15px; }
+        .btn { background-color: #2ed573; color: white; text-decoration: none; padding: 8px 12px; border-radius: 4px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Họ và tên: Nguyễn Minh Hiếu - MSSV: 23810310407</h1>
+    </div>
+
+    <div class="grid" id="product-list">
+        <p>Đang tải dữ liệu từ Bagisto API...</p>
+    </div>
+    <script>
+        const graphqlQuery = `
+            query {
+                products(first: 5) {
+                    data { id name price description urlKey }
+                }
+            }
+        `;
+        fetch('http://localhost:8000/graphql', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ query: graphqlQuery })
+        })
+        .then(response => response.json()) 
+        .then(data => {
+            const products = data.data.products.data; 
+            const container = document.getElementById('product-list');
+            container.innerHTML = ''; 
+            products.forEach(product => {
+                // Định dạng tiền tệ VNĐ
+                const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0);
+                const card = `
+                    <div class="card">
+                        <h3>${product.name}</h3>
+                        <div class="price">${formattedPrice}</div>
+                        <a href="#" class="btn">Chi tiết</a>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        })
+        .catch(error => {
+            console.error('Lỗi khi gọi API:', error);
+            document.getElementById('product-list').innerHTML = '<p style="color:red;">Không thể tải dữ liệu. Hãy chắc chắn Bagisto server đang chạy (php artisan serve).</p>';
+        });
+    </script>
+</body>
+</html>
